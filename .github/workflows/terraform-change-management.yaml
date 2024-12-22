@@ -23,7 +23,18 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with: 
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }} 
+          aws-region: "us-east-1"
       
+      - name: Debug
+        run: |
+            echo $AWS_SECRET_ACCESS_KEY
+
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v3
         with:
@@ -35,14 +46,13 @@ jobs:
             terraform init \
             -backend-config="bucket=${{ secrets.S3_BUCKET_NAME }}" \
             -backend-config="key=terraform.tfstate" \
-            -backend-config="region=$AWS_REGION" 
-#backend flag is for S3 in providers.tf
+            -backend-config="region=$AWS_REGION"  
+            
       - name: Plan  Terraform changes
         id: plan
         run: |
           terraform plan \
-          -out=tfplan \  
-#outputting the plan after apply not to initialize the following var
+          -out=tfplan \   
           -var "cluster_name=$CLUSTER_NAME" \
           -var "region=$AWS_REGION" 
           -var "vpc_id=$VPC_ID" \
